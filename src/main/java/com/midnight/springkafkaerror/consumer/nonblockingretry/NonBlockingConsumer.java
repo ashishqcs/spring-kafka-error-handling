@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 public class NonBlockingConsumer {
 
     @RetryableTopic(
-            attempts = "4",
-            backoff = @Backoff(delay = 1000, multiplier = 2.0),
+            attempts = "3",
+            backoff = @Backoff(delay = 2000, multiplier = 2.0),
             autoCreateTopics = "false",
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
     @KafkaListener(topics = "products-main")
@@ -30,8 +30,8 @@ public class NonBlockingConsumer {
     }
 
     @DltHandler
-    public void dlt(String in, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        log.info(in + " from " + topic);
+    public void dltListener(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
     }
 
 }
