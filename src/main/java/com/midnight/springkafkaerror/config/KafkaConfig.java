@@ -23,16 +23,20 @@ public class KafkaConfig {
         this.consumerFactory = consumerFactory;
     }
 
+
+    //Container Factory containing bocking error handler
     @Bean
-    ConcurrentKafkaListenerContainerFactory<String, String> kafkaRetryListenerContainerFactory(){
+    ConcurrentKafkaListenerContainerFactory<String, String> kafkaBlockingRetryContainerFactory(){
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(retryErrorHandler());
         return factory;
     }
 
+    // This is a blocking retry (will move offset only when all tries are completed) error handler configured with
+    // DeadLetterPublishingRecoverer which publishes event to DLT when tries are over
     public DefaultErrorHandler retryErrorHandler() {
 
-        return new DefaultErrorHandler(new DeadLetterPublishingRecoverer(template), new FixedBackOff(10000, 3));
+        return new DefaultErrorHandler(new DeadLetterPublishingRecoverer(template), new FixedBackOff(2000, 3));
     }
 }

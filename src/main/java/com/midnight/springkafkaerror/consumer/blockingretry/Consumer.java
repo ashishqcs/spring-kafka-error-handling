@@ -1,4 +1,4 @@
-package com.midnight.springkafkaerror.consumer;
+package com.midnight.springkafkaerror.consumer.blockingretry;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Component
 public class Consumer {
 
-
     private final KafkaTemplate<String, String> template;
 
     public Consumer(KafkaTemplate<String, String> template) {
@@ -23,13 +22,15 @@ public class Consumer {
 
     @KafkaListener(topics = "products")
     public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        try{
-            log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+        try {
 
-            if(!message.value().equals("This is new Product1"))
+            if (message.key().equals("product2"))
                 throw new RuntimeException("Exception in main consumer");
-        }
-        catch (Exception e){
+
+            log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+        } catch (Exception e) {
+            log.error("failed to consume - key: {}", message.key());
+            //send failed event to another retry topic - only a single retry topic is maintained
             template.send("products-retry", message.key(), message.value());
         }
 
