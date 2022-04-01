@@ -45,7 +45,7 @@ public class KafkaConfig {
 Retrying is done by creating separate retry topics and retry consumers at delayed intervals.
 
 * Unblocks the main topic for real time traffic.
-* Multiple strategies can be opted for different retry topic strategy like Single-Topic-Multiple-BackOff, Multiple-Topic-Exponential-BackOff.
+* Multiple strategies can be opted for non blocking retries like Single-Topic-Multiple-BackOff, Multiple-Topic-Exponential-BackOff.
 
 Retrying errors untill they are pushed to DLT (It could be multiple topics like explained below **OR** single retry topic - both have their own pros and cons).
 
