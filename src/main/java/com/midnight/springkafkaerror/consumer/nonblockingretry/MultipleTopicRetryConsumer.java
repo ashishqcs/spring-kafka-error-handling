@@ -13,20 +13,23 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
+/**
+ * Non-blocking retry consumer using multiple retry topics strategy with exponential backoff policy.
+ */
 @Slf4j
 @Component
-public class NonBlockingConsumer {
+public class MultipleTopicRetryConsumer {
 
     @RetryableTopic(
-            attempts = "3",
+            attempts = "4",
             backoff = @Backoff(delay = 2000, multiplier = 2.0),
             autoCreateTopics = "false",
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
-    @KafkaListener(topics = "products-main")
+    @KafkaListener(topics = "products-master")
     public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
 
         log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
-        throw new RuntimeException("Exception in main consumer");
+        throw new RuntimeException("Exception in master consumer");
     }
 
     @DltHandler

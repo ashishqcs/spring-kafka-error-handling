@@ -49,12 +49,12 @@ class BlockingConsumerTest {
         producer.send("products", "product2", "This is Product2");
         producer.send("products", "product1", "This is new Product1");
 
-        Thread.sleep(5000);
+        Thread.sleep(15000);
 
         assertThat(consumerAppender.list.get(0).getFormattedMessage()).startsWith("message consumed - key: product1");
         assertThat(consumerAppender.list).extracting(ILoggingEvent::getFormattedMessage).contains("failed to consume - key: product2");
 
-        assertThat(retryAppender.list.size()).isEqualTo(3);
+        assertThat(retryAppender.list.size()).isEqualTo(5);
         assertThat(retryAppender.list.get(0).getFormattedMessage()).startsWith("retrying message - key: product2");
     }
 }

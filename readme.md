@@ -45,10 +45,9 @@ public class KafkaConfig {
 Retrying is done by creating separate retry topics and retry consumers at delayed intervals.
 
 * Unblocks the main topic for real time traffic.
-* Exponential BackOffs can be used for different retry topics since it is unlikely that error will be resolved by
-  frequently trying it.
+* Multiple strategies can be opted for different retry topic strategy like Single-Topic-Multiple-BackOff, Multiple-Topic-Exponential-BackOff.
 
-Retrying errors untill they are pushed to DLT.
+Retrying errors untill they are pushed to DLT (It could be multiple topics like explained below **OR** single retry topic - both have their own pros and cons).
 
 * If message processing fails, the message is forwarded to a retry topic with a back off timestamp.
 * The retry topic consumer then checks the timestamp and if it's not due it pauses the consumption for that topic's
@@ -63,13 +62,46 @@ Retrying errors untill they are pushed to DLT.
 > Since Spring Kafka 2.7, it has added support to implement non blocking retries using different topics.
 
 ```java
-public class NonBlockingConsumer {
+/**
+ * Non-blocking retry consumer using multiple retry topics strategy with exponential backoff policy.
+ */
+@Slf4j
+@Component
+public class MultipleTopicRetryConsumer {
+
+  @RetryableTopic(
+          attempts = "4",
+          backoff = @Backoff(delay = 2000, multiplier = 2.0),
+          autoCreateTopics = "false",
+          topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
+  @KafkaListener(topics = "products-master")
+  public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+
+    log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+    throw new RuntimeException("Exception in master consumer");
+  }
+
+  @DltHandler
+  public void dltListener(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+    log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+  }
+
+}
+```
+`OR`
+
+```java
+/**
+ * Non-blocking retry consumer using single retry topic strategy with fixed backoff policy.
+ */
+@Slf4j
+@Component
+public class SingleTopicRetryConsumer {
 
     @RetryableTopic(
-            attempts = "3",
-            backoff = @Backoff(delay = 2000, multiplier = 2.0),
-            autoCreateTopics = "false",
-            topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
+            attempts = "4",
+            backoff = @Backoff(delay = 1000),
+            fixedDelayTopicStrategy = FixedDelayStrategy.SINGLE_TOPIC)
     @KafkaListener(topics = "products-main")
     public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
 
@@ -81,6 +113,5 @@ public class NonBlockingConsumer {
     public void dltListener(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
     }
-
 }
 ```
