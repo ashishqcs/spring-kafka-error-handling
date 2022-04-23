@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutionException;
+
 @Slf4j
 @Component
 public class Producer {
@@ -14,8 +16,8 @@ public class Producer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void send(String topic, String key,  String value) {
-        log.info("sending key='{}' value='{}' to topic='{}'",key , value, topic);
-        kafkaTemplate.send(topic, key, value);
+    public void send(String topic, String key, String value) throws ExecutionException, InterruptedException {
+        log.info("sending key='{}' value='{}' to topic='{}'", key, value, topic);
+        kafkaTemplate.send(topic, key, value).get();
     }
 }

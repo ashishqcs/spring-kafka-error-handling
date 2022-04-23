@@ -13,5 +13,21 @@ spring:
       bootstrap-servers: localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+logging:
+  level:
+    org:
+      springframework.*: OFF
+      apache:
+        kafka.*: OFF
+        state:
+          change.*: OFF
+    root: info
+    state:
+      change:
+        logger: OFF
+    k:
+      coordinator:
+        group:
+          GroupCoordinator: OFF
 
 
