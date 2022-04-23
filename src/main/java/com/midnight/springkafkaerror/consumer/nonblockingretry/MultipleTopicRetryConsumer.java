@@ -22,19 +22,22 @@ public class MultipleTopicRetryConsumer {
 
     @RetryableTopic(
             attempts = "4",
-            backoff = @Backoff(delay = 2000, multiplier = 2.0),
+            backoff = @Backoff(delay = 1000, multiplier = 1.0),
             autoCreateTopics = "false",
             topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
     @KafkaListener(topics = "products-master")
-    public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+    public void listen(ConsumerRecord<String, String> message) {
 
-        log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
-        throw new RuntimeException("Exception in master consumer");
+        log.info("message consumed - key: {} , value: {}, topic: {}",
+                message.key(),
+                message.value(),
+                message.topic());
+        throw new RuntimeException("Exception in main consumer");
     }
 
     @DltHandler
-    public void dltListener(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+    public void multipleTopicDLT(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        log.info("message consumed - key: {} , topic: {}", message.key(), message.topic());
     }
 
 }

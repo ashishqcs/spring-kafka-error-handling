@@ -11,8 +11,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-
 /**
  * Non-blocking retry consumer using single retry topic strategy with fixed backoff policy.
  */
@@ -23,16 +21,24 @@ public class SingleTopicRetryConsumer {
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 1000),
-            fixedDelayTopicStrategy = FixedDelayStrategy.SINGLE_TOPIC)
+            fixedDelayTopicStrategy = FixedDelayStrategy.SINGLE_TOPIC,
+            include = {ClassCastException.class},
+            includeNames = "java.lang.ClassCastException")
     @KafkaListener(topics = "products-main")
     public void listen(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
 
-        log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
-        throw new RuntimeException("Exception in main consumer");
+        log.info("SingleTopicRetryConsumer: message consumed - \nkey: {} , \nvalue: {}, \ntopic: {}",
+                message.key(),
+                message.value(),
+                message.topic());
+        throw new ClassCastException("Exception in main consumer");
     }
 
     @DltHandler
     public void dltListener(ConsumerRecord<String, String> message, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        log.info("message consumed - key: {} , value: {}, at: {}", message.key(), message.value(), LocalDateTime.now());
+        log.info("SingleTopicRetryConsumer: message consumed at DLT - \nkey: {} , \nvalue: {}, \ntopic: {}",
+                message.key(),
+                message.value(),
+                message.topic());
     }
 }
